@@ -1,0 +1,484 @@
+//////////////////////////////////////////////////////////////
+// JASPEART ECOMMERCE — CORE CATALOG V0
+//
+// OBJETIVO
+// -------
+// Primer modelo implementable del catálogo ecommerce.
+//
+// Filosofía:
+// - Usar DW para arrancar cuando el dato ya existe y no sea
+//   operacionalmente crítico.
+// - Pedir al ERP directamente los datos que deben estar
+//   actualizados para vender: especialmente precio, IVA y stock.
+// - Ecommerce gobierna presentación, agrupaciones e imágenes.
+// - Mantener el modelo pequeño y evolucionarlo con migraciones.
+//
+// NO INCLUYE TODAVÍA:
+// - rutas creativas
+// - Technique
+// - taxonomía ecommerce adicional
+// - atributos/filtros especializados
+// - promociones
+// - carrito
+// - pedidos
+// - clientes
+// - pagos
+// - envíos
+//////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////
+// BRAND
+//
+// Marca comercial asociada al producto.
+//
+// Para V0 podemos cargarla desde el DW porque producto → marca
+// ya está modelado.
+//
+// No necesitamos pedir un nuevo feed ERP de marcas para empezar,
+// salvo que descubramos carencias importantes.
+//////////////////////////////////////////////////////////////
+
+Table brand {
+
+  id uuid [
+    pk,
+    note: '[DERIVED] Identificador técnico interno de la marca en la Commerce DB. Lo genera nuestra aplicación; no procede de ERP ni DW.'
+  ]
+
+  source_brand_id varchar [
+    unique,
+    note: '[DW V0] Identificador/código de marca conocido en el DW. Inicialmente se reutiliza para mantener trazabilidad con el modelo actual.'
+  ]
+
+  name varchar [
+    not null,
+    note: '[DW V0] Nombre de la marca. Puede cargarse inicialmente desde la dimensión/modelo de marcas del DW.'
+  ]
+
+  slug varchar [
+    unique,
+    note: '[ECOMMERCE] Identificador legible para URLs. Ejemplo: royal-talens. Se genera/gestiona en ecommerce.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de creación del registro en la Commerce DB.'
+  ]
+
+  updated_at timestamp [
+    note: '[DERIVED] Fecha de última modificación del registro en la Commerce DB.'
+  ]
+
+  Note: 'Maestro mínimo de marcas. Para V0 se reutiliza el conocimiento ya disponible en DW.'
+}
+
+
+//////////////////////////////////////////////////////////////
+// FAMILY
+//
+// Familia comercial actual.
+//
+// Para V0 queremos reutilizar la clasificación existente
+// Familia → Producto.
+//
+// Algunas familias podrán excluirse posteriormente del ecommerce,
+// pero esa política de publicabilidad NO se modela todavía aquí.
+//////////////////////////////////////////////////////////////
+
+Table family {
+
+  id uuid [
+    pk,
+    note: '[DERIVED] Identificador técnico interno de la familia en ecommerce.'
+  ]
+
+  source_family_id varchar [
+    not null,
+    unique,
+    note: '[DW V0] Identificador/código de familia actualmente conocido en el DW.'
+  ]
+
+  name varchar [
+    not null,
+    note: '[DW V0] Nombre actual de la familia comercial. Ejemplos: ACRILICO, PINCELES, PAPEL Y BLOCS.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de creación del registro en Commerce DB.'
+  ]
+
+  updated_at timestamp [
+    note: '[DERIVED] Fecha de última modificación del registro.'
+  ]
+
+  Note: 'Clasificación principal de producto reutilizada desde el modelo actual de negocio/DW.'
+}
+
+
+//////////////////////////////////////////////////////////////
+// SUBFAMILY
+//
+// Segunda capa de clasificación.
+//
+// Todavía está entrando en el modelo actual.
+//
+// Para V0:
+// - la tabla existe;
+// - product.subfamily_id puede ser NULL;
+// - no bloquea el desarrollo si todavía no tenemos toda
+//   la clasificación completa.
+//////////////////////////////////////////////////////////////
+
+Table subfamily {
+
+  id uuid [
+    pk,
+    note: '[DERIVED] Identificador técnico interno de la subfamilia en ecommerce.'
+  ]
+
+  source_subfamily_id varchar [
+    not null,
+    unique,
+    note: '[DW V0] Código/identificador de subfamilia cuando ya esté disponible en el modelo actual. Si todavía no existe una fuente suficientemente estable, se cargará más adelante.'
+  ]
+
+  family_id uuid [
+    not null,
+    ref: > family.id,
+    note: '[DW V0] Familia a la que pertenece la subfamilia.'
+  ]
+
+  name varchar [
+    not null,
+    note: '[DW V0] Nombre de la subfamilia.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de creación en Commerce DB.'
+  ]
+
+  updated_at timestamp [
+    note: '[DERIVED] Fecha de última modificación.'
+  ]
+
+  Note: 'Permite evolucionar hacia Familia → Subfamilia → Producto sin obligarnos a tener una cobertura completa desde el primer día.'
+}
+
+
+//////////////////////////////////////////////////////////////
+// PRODUCT RANGE
+//
+// Agrupación puramente ecommerce.
+//
+// NO es una referencia vendible.
+// NO existe necesariamente en ERP ni DW.
+//
+// Ejemplo:
+//
+// ProductRange:
+//   Amsterdam Standard Series Acrylic
+//
+// Products:
+//   Azul Ultramar 120 ml
+//   Azul Ultramar 500 ml
+//   Blanco Titanio 120 ml
+//   etc.
+//
+// Cada Product sigue teniendo su propio prod_cod.
+//////////////////////////////////////////////////////////////
+
+Table product_range {
+
+  id uuid [
+    pk,
+    note: '[ECOMMERCE] Identificador interno de la gama.'
+  ]
+
+  brand_id uuid [
+    ref: > brand.id,
+    note: '[DW V0 + ECOMMERCE] Marca asociada a la gama. La marca procede del catálogo existente; la agrupación como gama la decide ecommerce.'
+  ]
+
+  name varchar [
+    not null,
+    note: '[ECOMMERCE / MANUAL V0] Nombre comercial de la gama. Ejemplo: Amsterdam Standard Series.'
+  ]
+
+  slug varchar [
+    unique,
+    note: '[ECOMMERCE] Identificador para URL pública de la gama.'
+  ]
+
+  description text [
+    note: '[ECOMMERCE] Descripción general opcional de la gama. No necesitamos completarla para todas las gamas en V0.'
+  ]
+
+  is_published boolean [
+    not null,
+    default: false,
+    note: '[ECOMMERCE] Indica si la gama está visible actualmente en la web. En V0 usamos un boolean simple y evitamos workflows editoriales complejos.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de creación en Commerce DB.'
+  ]
+
+  updated_at timestamp [
+    note: '[DERIVED] Fecha de última modificación.'
+  ]
+
+  Note: 'Agrupación UX opcional de referencias similares. No tiene precio ni stock propios.'
+}
+
+
+//////////////////////////////////////////////////////////////
+// PRODUCT
+//
+// TABLA CENTRAL.
+//
+// PRODUCT = referencia vendible real.
+//
+// Cada prod_cod diferente representa un Product distinto.
+//
+// Para arrancar V0:
+// - identidad, descripción, familia y marca pueden venir del DW.
+// - precio, IVA y stock deben venir directamente del ERP
+//   para producción.
+// - contenido comercial se gestiona en ecommerce.
+//////////////////////////////////////////////////////////////
+
+Table product {
+
+  ////////////////////////////////////////////////////////////
+  // IDENTIDAD
+  ////////////////////////////////////////////////////////////
+
+  id uuid [
+    pk,
+    note: '[DERIVED] Identificador técnico interno del producto en Commerce DB. Independiente de ERP, DW y URL.'
+  ]
+
+  erp_code varchar [
+    not null,
+    unique,
+    note: '[DW V0 / ERP PROD] prod_cod. Para V0 puede cargarse desde dw.d_producto, donde ya se ha auditado como único y completo. En producción será la clave de integración con ERP.'
+  ]
+
+  erp_name varchar [
+    not null,
+    note: '[DW V0] Descripción actual del producto procedente del modelo existente. Inicialmente puede cargarse desde dw.d_producto.prod_desc.'
+  ]
+
+  commerce_name varchar [
+    note: '[ECOMMERCE] Nombre que realmente mostraremos al cliente. Permite mejorar nombres administrativos del ERP sin modificar el dato origen.'
+  ]
+
+  slug varchar [
+    unique,
+    note: '[ECOMMERCE] Identificador legible para URL. Ejemplo: amsterdam-acrilico-azul-ultramar-120ml.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // CLASIFICACIÓN
+  ////////////////////////////////////////////////////////////
+
+  brand_id uuid [
+    ref: > brand.id,
+    note: '[DW V0] Marca asociada actualmente al producto. Puede resolverse inicialmente desde marca_id_actual / dimensión de marca del DW.'
+  ]
+
+  family_id uuid [
+    ref: > family.id,
+    note: '[DW V0] Familia comercial actual del producto. Puede resolverse inicialmente desde familia_id_actual.'
+  ]
+
+  subfamily_id uuid [
+    ref: > subfamily.id,
+    note: '[DW V0] Subfamilia cuando esté disponible y validada. Puede permanecer NULL mientras completamos el modelo.'
+  ]
+
+  range_id uuid [
+    ref: > product_range.id,
+    note: '[ECOMMERCE / MANUAL V0] Agrupación opcional en una gama. NULL significa que el producto se presenta como referencia independiente.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // CONTENIDO ECOMMERCE BÁSICO
+  //
+  // Lo mantenemos dentro de Product para no crear todavía
+  // una tabla ProductContent separada.
+  ////////////////////////////////////////////////////////////
+
+  short_description text [
+    note: '[ECOMMERCE] Explicación breve orientada al comprador. Puede quedar NULL inicialmente.'
+  ]
+
+  long_description text [
+    note: '[ECOMMERCE] Descripción ampliada comercial/técnica. Puede completarse progresivamente.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // VISIBILIDAD
+  //
+  // Todavía NO implementamos un motor de publicabilidad.
+//
+// Ejemplo:
+// familia ENCARGOS simplemente no se publicará.
+//
+// En V0 necesitamos únicamente poder decidir si mostramos
+// una referencia o no.
+  ////////////////////////////////////////////////////////////
+
+  is_published boolean [
+    not null,
+    default: false,
+    note: '[ECOMMERCE] Control simple de visibilidad del producto. No representa todavía una regla automática de publicabilidad.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // PRECIO
+  //
+  // CRÍTICO PARA PRODUCCIÓN.
+//
+// NO queremos depender del precio analítico del DW.
+//
+// Necesidad ERP:
+// obtener periódicamente para cada erp_code:
+// - precio actual
+// - IVA
+// - momento/frescura del dato si es posible
+  ////////////////////////////////////////////////////////////
+
+  price decimal [
+    note: '[ERP PROD] Precio actual de venta de la referencia. Para producción debe sincronizarse directamente desde ERP. En desarrollo puede utilizarse un valor de muestra o extracción controlada.'
+  ]
+
+  vat_rate decimal [
+    note: '[ERP PROD] Tipo de IVA actual aplicable a esta referencia. Debe formar parte del contrato/feed operacional del ERP.'
+  ]
+
+  price_synced_at timestamp [
+    note: '[DERIVED] Fecha y hora en que Commerce recibió por última vez correctamente precio/IVA desde ERP.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // STOCK
+  //
+  // CRÍTICO PARA PRODUCCIÓN.
+//
+// ERP será el master.
+//
+// Commerce conserva una copia para servir la web sin consultar
+// ERP en cada visita.
+  ////////////////////////////////////////////////////////////
+
+  stock_quantity decimal [
+    note: '[ERP PROD] Última cantidad de stock conocida para la referencia. Debe obtenerse mediante sincronización periódica directa con ERP.'
+  ]
+
+  stock_status varchar [
+    note: '[DERIVED desde ERP] Estado simplificado calculado por Commerce a partir del stock recibido. Valores iniciales: IN_STOCK, OUT_OF_STOCK o UNKNOWN.'
+  ]
+
+  stock_synced_at timestamp [
+    note: '[DERIVED] Fecha y hora de la última sincronización correcta del stock desde ERP.'
+  ]
+
+
+  ////////////////////////////////////////////////////////////
+  // TRAZABILIDAD BÁSICA
+  ////////////////////////////////////////////////////////////
+
+  imported_from_dw_at timestamp [
+    note: '[DERIVED] Fecha de la última carga/actualización de datos no críticos procedentes del DW. Nos permite saber con qué versión del catálogo estamos trabajando.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de creación de la referencia dentro de Commerce DB.'
+  ]
+
+  updated_at timestamp [
+    note: '[DERIVED] Fecha de última modificación del registro en Commerce DB.'
+  ]
+
+  Note: 'Unidad vendible del ecommerce. Identidad y clasificación pueden arrancar desde DW; precio, IVA y stock deben quedar bajo sincronización operacional con ERP.'
+}
+
+
+//////////////////////////////////////////////////////////////
+// PRODUCT IMAGE
+//
+// Modelo mínimo de imágenes.
+//
+// Los ficheros NO se almacenan dentro de PostgreSQL.
+//
+// PostgreSQL guarda únicamente:
+// - dónde está el fichero
+// - a qué Product/Range pertenece
+// - cuál es principal
+// - metadata mínima
+//
+// Procedencia todavía abierta:
+// - WordPress
+// - fabricante/proveedor
+// - JaspeArt
+// - carga manual
+//////////////////////////////////////////////////////////////
+
+Table product_image {
+
+  id uuid [
+    pk,
+    note: '[ECOMMERCE] Identificador técnico interno de la imagen.'
+  ]
+
+  product_id uuid [
+    ref: > product.id,
+    note: '[ECOMMERCE] Referencia concreta a la que pertenece la imagen. Puede ser NULL si la imagen es común a toda una ProductRange.'
+  ]
+
+  range_id uuid [
+    ref: > product_range.id,
+    note: '[ECOMMERCE] Gama a la que pertenece la imagen. Puede ser NULL si pertenece únicamente a un Product.'
+  ]
+
+  storage_key varchar [
+    not null,
+    note: '[ECOMMERCE] Ruta/clave del fichero en el futuro almacenamiento de objetos. El proveedor concreto todavía está pendiente.'
+  ]
+
+  source varchar [
+    note: '[ECOMMERCE / MANUAL V0] Procedencia de la imagen. Valores iniciales posibles: WORDPRESS, SUPPLIER, JASPEART, MANUAL.'
+  ]
+
+  source_reference varchar [
+    note: '[ECOMMERCE] Referencia original opcional para poder rastrear la imagen: ID de WordPress, SKU del fabricante, nombre de fichero original, etc.'
+  ]
+
+  alt_text varchar [
+    note: '[ECOMMERCE] Texto alternativo utilizado para accesibilidad. Puede generarse/completarse durante el enriquecimiento del catálogo.'
+  ]
+
+  sort_order int [
+    not null,
+    default: 0,
+    note: '[ECOMMERCE] Posición de la imagen dentro de la galería.'
+  ]
+
+  is_primary boolean [
+    not null,
+    default: false,
+    note: '[ECOMMERCE] Indica cuál es la imagen principal de la referencia o de la gama.'
+  ]
+
+  created_at timestamp [
+    note: '[DERIVED] Fecha de incorporación del recurso al ecommerce.'
+  ]
+
+  Note: 'Modelo mínimo de media. Una imagen pertenece a Product o ProductRange; los binarios se almacenarán fuera de PostgreSQL.'
+}
