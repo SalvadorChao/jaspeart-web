@@ -1,9 +1,14 @@
 ﻿# VS Code
 .vscode/
 
+# Node.js
+node_modules/
+generated/
+
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # OS files
 .DS_Store
