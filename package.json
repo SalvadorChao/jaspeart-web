@@ -7,7 +7,11 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -16,15 +20,26 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/SalvadorChao/jaspeart-web/issues"
   },
   "homepage": "https://github.com/SalvadorChao/jaspeart-web#readme",
   "devDependencies": {
-    "prisma": "^6.16.2"
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.5.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.4",
+    "prisma": "^6.16.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2"
+    "@prisma/client": "^6.16.2",
+    "next": "^16.3.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }
