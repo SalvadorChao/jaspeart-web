@@ -5,6 +5,10 @@
 node_modules/
 generated/
 
+# Python
+__pycache__/
+*.egg-info/
+
 # Environment variables
 .env
 .env.*
