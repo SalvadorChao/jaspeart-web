@@ -24,3 +24,6 @@ Desktop.ini
 *.tmp
 ~$*
 ~*.*
+
+# Historical visual explorations
+reference/skywork-prototype/
