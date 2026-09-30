@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* Values sampled from reference/design-v1/line-e (1440px reference width). */
+@theme {
+  --color-paper: #f8f8f4;
+  --color-surface: #f0f1ed;
+  --color-ink: #13211e;
+  --color-ink-muted: #5d6965;
+  --color-rule: #d9ded8;
+  --color-accent: #3d7561;
+  --color-tint: #dbe9e2;
+
+  /* Provisional typeface: final typography is still undecided. */
+  --font-sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+
+  --spacing-gutter: clamp(1.25rem, 4.5vw, 4rem);
+  --spacing-section: clamp(3.5rem, 7vw, 5rem);
+
+  /* Max widths include the horizontal gutter padding. */
+  --container-page: 90rem;
+  --container-editorial: 81.5rem;
+}
+
 html,
 body {
   margin: 0;
@@ -7,5 +28,13 @@ body {
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
 }

@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "JaspeArt",
-  description: "Ecommerce V0 de JaspeArt, especialista en Bellas Artes.",
+  title: {
+    default: "JaspeArt",
+    template: "%s · JaspeArt",
+  },
+  description: "JaspeArt, especialista en Bellas Artes. V1 visual de demostración.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
@@ -13,7 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }
