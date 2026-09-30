@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/components/cart/CartProvider";
 
 const NAV = [
   { href: "/", label: "Inicio", isActive: (path: string) => path === "/" },
@@ -15,6 +16,8 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { hydrated, totalUnits } = useCart();
+  const cartActive = pathname === "/cesta";
 
   return (
     <header className="border-b border-rule bg-paper">
@@ -47,14 +50,21 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        {/* Search and cart are visual-only in V1. */}
+        {/* Search is still visual-only. */}
         <div className="col-start-2 row-start-1 flex justify-end gap-4 text-[13px] md:col-start-3">
           <button type="button" aria-disabled="true" className="cursor-default">
             Buscar
           </button>
-          <button type="button" aria-disabled="true" className="cursor-default">
-            Cesta (0)
-          </button>
+          <Link
+            href="/cesta"
+            aria-current={cartActive ? "page" : undefined}
+            aria-label={
+              hydrated ? `Cesta, ${totalUnits} ${totalUnits === 1 ? "unidad" : "unidades"}` : "Cesta"
+            }
+            className={`border-b ${cartActive ? "border-ink" : "border-transparent hover:border-rule"}`}
+          >
+            Cesta{hydrated && <span className="tabular-nums"> ({totalUnits})</span>}
+          </Link>
         </div>
       </div>
     </header>

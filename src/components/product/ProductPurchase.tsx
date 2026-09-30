@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Price } from "@/components/catalog/Price";
 import type { CatalogProduct } from "@/lib/catalog/types";
-import { QuantityStepper } from "./QuantityStepper";
+import { AddToCart } from "./AddToCart";
 
 function stockLabel(quantity: number): string {
   if (quantity <= 0) return "No disponible";
@@ -66,7 +66,16 @@ export function ProductPurchase({ product, variants }: ProductPurchaseProps) {
       </p>
 
       <div className="mt-4">
-        <QuantityStepper available={available} />
+        <AddToCart
+          product={{
+            slug: product.slug,
+            erpCode: product.erpCode,
+            name: product.name,
+            format: product.format,
+            unitPrice: product.price,
+            stockQuantity: product.stockQuantity,
+          }}
+        />
       </div>
     </div>
   );
